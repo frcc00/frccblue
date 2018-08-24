@@ -15,9 +15,9 @@ iOS android
 # 使用
 ```
 dependencies:
-  frccble:
+  frccblue:
     git:
-      url: https://github.com/asusaa/frccble
+      url: https://github.com/asusaa/frccblue
 ```
       
       
