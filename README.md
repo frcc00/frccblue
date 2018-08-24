@@ -39,3 +39,39 @@ Frccblue.init(didReceiveRead:(MethodCall call){
 
 Frccblue.startPeripheral("00000000-0000-0000-0000-AAAAAAAAAAA1", "00000000-0000-0000-0000-AAAAAAAAAAA2").then((_){});
 ```
+
+# more
+## peripheralManagerDidUpdateState
+iOS上传状态
+```
+switch peripheral.state {
+        case .unknown:
+            print("未知的")
+            state = "unknown"
+        case .resetting:
+            print("重置中")
+            state = "resetting"
+        case .unsupported:
+            print("不支持")
+            state = "unsupported"
+        case .unauthorized:
+            print("未验证")
+            state = "unauthorized"
+        case .poweredOff:
+            print("未启动")
+            state = "poweredOff"
+            self.peripheralManager?.stopAdvertising()
+        case .poweredOn:
+            print("可用")
+            state = "poweredOn"
+```
+android上传状态
+```
+"unknown"
+"poweredOff"
+"poweredOn"
+```
+
+
+由于iOS没有设备连上和断开连接的回掉，android有；所以统一要求中心设备订阅Characteristic。
+那么didSubscribeTo表示设备连上，didUnsubscribeFrom表示设备断开。android端didUnsubscribeFrom会被触发2次，在设备主动取消订阅的情况下。
