@@ -17,7 +17,7 @@ iOS android
 dependencies:
   frccblue:
     git:
-      url: https://github.com/asusaa/frccblue
+      url: https://github.com/frcc00/frccblue
 ```
       
       
