@@ -40,8 +40,8 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
             let param = call.arguments as! NSDictionary
             let centraluuidString = param["centraluuidString"] as! NSString
             let characteristicuuidString = param["characteristicuuidString"] as! NSString
-            let data = param["data"] as! Data
-            peripheralManager?.updateValue(data, for: (characteristicDic[characteristicuuidString]) as! CBMutableCharacteristic, onSubscribedCentrals: [centralDic[centraluuidString] as! CBCentral])
+            let data = param["data"] as! FlutterStandardTypedData
+            peripheralManager?.updateValue(data.data, for: (characteristicDic[characteristicuuidString]) as! CBMutableCharacteristic, onSubscribedCentrals: [centralDic[centraluuidString] as! CBCentral])
         }
     }
     
