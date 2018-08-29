@@ -39,7 +39,7 @@ class _MyAppState extends State<MyApp> {
       print(call.arguments);
     },didSubscribeTo: (MethodCall call){
       print(call.arguments);
-//      Frccblue.peripheralUpdateValue()
+      Frccblue.peripheralUpdateValue(call.arguments["centraluuidString"],call.arguments["characteristicuuidString"],Uint8List.fromList([11,2,3,4,5,6,7,8,9,10,11,2,3]));
     },didUnsubscribeFrom: (MethodCall call){
       print(call.arguments);
     },peripheralManagerDidUpdateState: (MethodCall call){

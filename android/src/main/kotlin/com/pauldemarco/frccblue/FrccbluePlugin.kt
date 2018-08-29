@@ -2,14 +2,15 @@ package com.pauldemarco.frccblue
 
 import android.annotation.TargetApi
 import android.app.Activity
+import android.app.Notification
+import android.app.PendingIntent
+import android.app.Service
 import android.bluetooth.*
-import android.os.Build
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.PluginRegistry.Registrar
-import android.os.ParcelUuid
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.AdvertiseCallback
@@ -20,7 +21,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Handler
+import android.os.*
 import android.util.Log
 import android.widget.Toast
 import com.example.android.bluetoothgattperipheral.DeviceProfile
@@ -284,7 +285,7 @@ class FrccbluePlugin() : MethodCallHandler {
 
         val data = AdvertiseData.Builder()
                 .setIncludeDeviceName(true)
-                .addServiceUuid(ParcelUuid(DeviceProfile.SERVICE_UUID))
+                .addServiceUuid(ParcelUuid(UUID.fromString(Service_UUID)))
                 .build()
 
         mBluetoothLeAdvertiser!!.startAdvertising(settings, data, mAdvertiseCallback)

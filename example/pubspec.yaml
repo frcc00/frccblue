@@ -25,7 +25,7 @@ dev_dependencies:
     path: ../
 
 environment:
-   sdk: ">=2.0.0-dev.68.0 <3.0.0"
+   sdk: ">=1.0.0-dev.68.0 <3.0.0"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
