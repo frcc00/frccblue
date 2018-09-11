@@ -140,11 +140,11 @@ class FrccbluePlugin() : MethodCallHandler {
          * Check for advertising support. Not all devices are enabled to advertise
          * Bluetooth LE data.
          */
-        if (!mBluetoothAdapter!!.isMultipleAdvertisementSupported()) {
-            Toast.makeText(FrccbluePlugin.activity?.applicationContext, "No Advertising Support.", Toast.LENGTH_SHORT).show()
-            FrccbluePlugin.activity?.finish()
-            return
-        }
+//        if (!mBluetoothAdapter!!.isMultipleAdvertisementSupported()) {
+//            Toast.makeText(FrccbluePlugin.activity?.applicationContext, "No Advertising Support.", Toast.LENGTH_SHORT).show()
+//            FrccbluePlugin.activity?.finish()
+//            return
+//        }
 
         mBluetoothLeAdvertiser = mBluetoothAdapter!!.getBluetoothLeAdvertiser()
         mGattServer = mBluetoothManager!!.openGattServer(FrccbluePlugin.activity?.applicationContext, mGattServerCallback)
