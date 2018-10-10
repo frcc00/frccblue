@@ -235,11 +235,13 @@ class FrccbluePlugin() : MethodCallHandler {
 //
             if (UUID.fromString(Characteristic_UUID) == characteristic.uuid) {
                 channel?.invokeMethod("didReceiveWrite",hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString(), "data" to value))
-                mGattServer?.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        null)
+                if(responseNeeded) {
+                    mGattServer?.sendResponse(device,
+                            requestId,
+                            BluetoothGatt.GATT_SUCCESS,
+                            0,
+                            null)
+                }
             }
         }
 
@@ -261,11 +263,13 @@ class FrccbluePlugin() : MethodCallHandler {
             super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value)
             Log.i(TAG, "onDescriptorWriteRequest " + descriptor?.uuid.toString() + "preparedWrite:"+preparedWrite+"responseNeeded:"+responseNeeded+"value:"+value)
 
-            mGattServer?.sendResponse(device,
-                    requestId,
-                    BluetoothGatt.GATT_SUCCESS,
-                    0,
-                    null)
+            if(responseNeeded) {
+                mGattServer?.sendResponse(device,
+                        requestId,
+                        BluetoothGatt.GATT_SUCCESS,
+                        0,
+                        null)
+            }
 
             if (descriptorsDic.containsKey(descriptor?.uuid.toString())){
                 descriptorsDic.remove(descriptor?.uuid.toString())

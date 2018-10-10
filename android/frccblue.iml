@@ -23,14 +23,13 @@
       </configuration>
     </facet>
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 1.8" useProjectSettings="false">
+      <configuration version="3" platform="JVM 1.6" useProjectSettings="false">
         <compilerSettings />
         <compilerArguments>
           <option name="destination" value="$MODULE_DIR$/../example/build/frccblue/tmp/kotlin-classes/debug" />
           <option name="noStdlib" value="true" />
           <option name="noReflect" value="true" />
           <option name="moduleName" value="frccblue_debug" />
-          <option name="jvmTarget" value="1.8" />
           <option name="addCompilerBuiltIns" value="true" />
           <option name="loadBuiltInsFromDependencies" value="true" />
           <option name="languageVersion" value="1.2" />
@@ -112,12 +111,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../example/build/frccblue/generated/source/apt/test/debug" isTestSource="true" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/attr" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/check-manifest" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/classes" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/incremental" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/intermediate-jars" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/javaPrecompile" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/jniLibs" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/lint" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/manifests" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/packaged-aidl" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/packagedAssets" />
@@ -127,10 +121,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/rs" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/shaders" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/symbols" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/intermediates/transforms" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/kotlin" />
       <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/outputs" />
-      <excludeFolder url="file://$MODULE_DIR$/../example/build/frccblue/tmp" />
     </content>
     <orderEntry type="jdk" jdkName="Android API 27 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

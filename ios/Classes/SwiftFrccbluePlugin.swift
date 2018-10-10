@@ -11,6 +11,13 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
     let centralDic:NSMutableDictionary = [:]
     let characteristicDic:NSMutableDictionary = [:]
     
+    let NOTIFY_MTU = 20
+    var sendDataIndex = 0
+    
+    var dataToSend:Data?
+    var characteristicToSend:CBMutableCharacteristic?
+    var centralToSend:CBCentral?
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "frccblue", binaryMessenger: registrar.messenger())
     let instance = SwiftFrccbluePlugin()
@@ -38,10 +45,33 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
         }
         if call.method == "peripheralUpdateValue" {
             let param = call.arguments as! NSDictionary
-            let centraluuidString = param["centraluuidString"] as! NSString
-            let characteristicuuidString = param["characteristicuuidString"] as! NSString
-            let data = param["data"] as! FlutterStandardTypedData
-            peripheralManager?.updateValue(data.data, for: (characteristicDic[characteristicuuidString]) as! CBMutableCharacteristic, onSubscribedCentrals: [centralDic[centraluuidString] as! CBCentral])
+            let centraluuidString = (param["centraluuidString"] as? NSString) ?? ""
+            let characteristicuuidString = (param["characteristicuuidString"] as? NSString) ?? ""
+            let data = (param["data"] as? FlutterStandardTypedData) ?? FlutterStandardTypedData()
+            self.dataToSend = data.data
+            self.characteristicToSend = (characteristicDic[characteristicuuidString]) as? CBMutableCharacteristic
+            self.centralToSend = centralDic[centraluuidString] as? CBCentral
+            self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
+        }
+    }
+    
+    func sendData(data:NSData, characteristic:CBMutableCharacteristic, central:CBCentral){
+        var didSend = true;
+        while (didSend) {
+            var amountToSend = data.length - self.sendDataIndex
+            if amountToSend > NOTIFY_MTU {
+                amountToSend = NOTIFY_MTU;
+            }
+            let chunk = NSData(bytes: data.bytes+self.sendDataIndex, length: amountToSend)
+            didSend = peripheralManager?.updateValue(chunk as Data, for: characteristic, onSubscribedCentrals: [central]) ?? false
+            if !didSend {
+                return;
+            }
+            self.sendDataIndex += amountToSend
+            if self.sendDataIndex >= data.length {
+                peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central])
+                return
+            }
         }
     }
     
@@ -107,6 +137,10 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
                 peripheral.respond(to: request, withResult: .success)
             }
         })
+    }
+    
+    public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
     }
     
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
