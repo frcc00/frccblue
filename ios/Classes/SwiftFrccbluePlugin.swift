@@ -11,7 +11,7 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
     let centralDic:NSMutableDictionary = [:]
     let characteristicDic:NSMutableDictionary = [:]
     
-    let NOTIFY_MTU = 20
+    var NOTIFY_MTU = 20
     var sendDataIndex = 0
     
     var dataToSend:Data?
@@ -51,28 +51,24 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
             self.dataToSend = data.data
             self.characteristicToSend = (characteristicDic[characteristicuuidString]) as? CBMutableCharacteristic
             self.centralToSend = centralDic[centraluuidString] as? CBCentral
+            self.NOTIFY_MTU = self.centralToSend?.maximumUpdateValueLength ?? 20
             self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
         }
     }
     
     func sendData(data:NSData, characteristic:CBMutableCharacteristic, central:CBCentral){
-        var didSend = true;
-        while (didSend) {
-            var amountToSend = data.length - self.sendDataIndex
-            if amountToSend > NOTIFY_MTU {
-                amountToSend = NOTIFY_MTU;
-            }
-            let chunk = NSData(bytes: data.bytes+self.sendDataIndex, length: amountToSend)
-            didSend = peripheralManager?.updateValue(chunk as Data, for: characteristic, onSubscribedCentrals: [central]) ?? false
+        var offset = 0
+        repeat {
+            let thisChunkSize = ((data.length - offset) > NOTIFY_MTU) ? NOTIFY_MTU : (data.length - offset);
+            let chunk = data.subdata(with: NSMakeRange(offset, thisChunkSize))
+            let didSend = peripheralManager?.updateValue(chunk as Data, for: characteristic, onSubscribedCentrals: [central]) ?? false
             if !didSend {
-                return;
-            }
-            self.sendDataIndex += amountToSend
-            if self.sendDataIndex >= data.length {
-                peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central])
                 return
             }
-        }
+            offset += thisChunkSize;
+        } while (offset < data.length);
+        peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central])
+        return
     }
     
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
