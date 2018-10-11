@@ -73,7 +73,7 @@ class FrccbluePlugin() : MethodCallHandler {
             val packetsToSendArr = ArrayList<ByteArray>()
 
             for (i in 0..packetsToSend){
-                var chunkdata = Arrays.copyOfRange(data, start, start+chunksize)
+                var chunkdata = Arrays.copyOfRange(data, start, if ((start+chunksize)>data.size) (data.size) else (start+chunksize))
                 packetsToSendArr.add(chunkdata)
                 start += chunksize
             }
