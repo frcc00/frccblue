@@ -13,21 +13,22 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
     
     var NOTIFY_MTU = 20
     var sendDataIndex = 0
+    var offset = 0
     
     var dataToSend:Data?
     var characteristicToSend:CBMutableCharacteristic?
     var centralToSend:CBCentral?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "frccblue", binaryMessenger: registrar.messenger())
-    let instance = SwiftFrccbluePlugin()
+        let channel = FlutterMethodChannel(name: "frccblue", binaryMessenger: registrar.messenger())
+        let instance = SwiftFrccbluePlugin()
         instance.channel = channel
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
     private var Service_UUID: String = "00000000-0000-0000-0000-AAAAAAAAAAA1"
     private var Characteristic_UUID: String = "00000000-0000-0000-0000-AAAAAAAAAAA2"
-
+    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "getPlatformVersion"{
             result("iOS sss" + UIDevice.current.systemVersion)
@@ -52,23 +53,25 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
             self.characteristicToSend = (characteristicDic[characteristicuuidString]) as? CBMutableCharacteristic
             self.centralToSend = centralDic[centraluuidString] as? CBCentral
             self.NOTIFY_MTU = self.centralToSend?.maximumUpdateValueLength ?? 20
+            self.offset = 0
             self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
         }
     }
     
     func sendData(data:NSData, characteristic:CBMutableCharacteristic, central:CBCentral){
-        var offset = 0
-        repeat {
-            let thisChunkSize = ((data.length - offset) > NOTIFY_MTU) ? NOTIFY_MTU : (data.length - offset);
-            let chunk = data.subdata(with: NSMakeRange(offset, thisChunkSize))
+        while (self.offset < data.length) {
+            let thisChunkSize = ((data.length - self.offset) > NOTIFY_MTU) ? NOTIFY_MTU : (data.length - self.offset)
+            let chunk = data.subdata(with: NSMakeRange(self.offset, thisChunkSize))
             let didSend = peripheralManager?.updateValue(chunk as Data, for: characteristic, onSubscribedCentrals: [central]) ?? false
             if !didSend {
                 return
             }
-            offset += thisChunkSize;
-        } while (offset < data.length);
-        peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central])
-        return
+            self.offset += thisChunkSize
+        }
+        let sendEOF = peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central]) ?? false
+        if sendEOF {
+            print("EOF")
+        }
     }
     
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
