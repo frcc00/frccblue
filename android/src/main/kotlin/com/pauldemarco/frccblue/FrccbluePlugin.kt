@@ -24,7 +24,6 @@ import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
 import android.widget.Toast
-import com.example.android.bluetoothgattperipheral.DeviceProfile
 import java.nio.charset.Charset
 import java.sql.Time
 import java.util.*
