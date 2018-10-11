@@ -25,7 +25,10 @@ import android.os.*
 import android.util.Log
 import android.widget.Toast
 import com.example.android.bluetoothgattperipheral.DeviceProfile
+import java.nio.charset.Charset
+import java.sql.Time
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 class FrccbluePlugin() : MethodCallHandler {
@@ -64,8 +67,25 @@ class FrccbluePlugin() : MethodCallHandler {
 
             val device = centralsDic.get(centraluuidString)
             val characteristic = characteristicsDic.get(characteristicuuidString)
-            characteristic?.setValue(data)
 
+            val chunksize = 20
+            var start = 0
+            var packetsToSend = Math.ceil( data.size / chunksize * 1.0).toInt()
+            val packetsToSendArr = ArrayList<ByteArray>()
+
+            for (i in 0..packetsToSend){
+                var chunkdata = Arrays.copyOfRange(data, start, start+chunksize)
+                packetsToSendArr.add(chunkdata)
+                start += chunksize
+            }
+
+            for (data in packetsToSendArr){
+                characteristic?.setValue(data)
+                mGattServer?.notifyCharacteristicChanged(device, characteristic, false)
+                Thread.sleep(200)
+            }
+
+            characteristic?.setValue("EOF".toByteArray(Charsets.UTF_8))
             mGattServer?.notifyCharacteristicChanged(device, characteristic, false)
         }
     }
