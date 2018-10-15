@@ -11,16 +11,24 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
     let centralDic:NSMutableDictionary = [:]
     let characteristicDic:NSMutableDictionary = [:]
     
+    var NOTIFY_MTU = 20
+    var sendDataIndex = 0
+    var offset = 0
+    
+    var dataToSend:Data?
+    var characteristicToSend:CBMutableCharacteristic?
+    var centralToSend:CBCentral?
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "frccblue", binaryMessenger: registrar.messenger())
-    let instance = SwiftFrccbluePlugin()
+        let channel = FlutterMethodChannel(name: "frccblue", binaryMessenger: registrar.messenger())
+        let instance = SwiftFrccbluePlugin()
         instance.channel = channel
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
     private var Service_UUID: String = "00000000-0000-0000-0000-AAAAAAAAAAA1"
     private var Characteristic_UUID: String = "00000000-0000-0000-0000-AAAAAAAAAAA2"
-
+    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "getPlatformVersion"{
             result("iOS sss" + UIDevice.current.systemVersion)
@@ -38,10 +46,31 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
         }
         if call.method == "peripheralUpdateValue" {
             let param = call.arguments as! NSDictionary
-            let centraluuidString = param["centraluuidString"] as! NSString
-            let characteristicuuidString = param["characteristicuuidString"] as! NSString
-            let data = param["data"] as! FlutterStandardTypedData
-            peripheralManager?.updateValue(data.data, for: (characteristicDic[characteristicuuidString]) as! CBMutableCharacteristic, onSubscribedCentrals: [centralDic[centraluuidString] as! CBCentral])
+            let centraluuidString = (param["centraluuidString"] as? NSString) ?? ""
+            let characteristicuuidString = (param["characteristicuuidString"] as? NSString) ?? ""
+            let data = (param["data"] as? FlutterStandardTypedData) ?? FlutterStandardTypedData()
+            self.dataToSend = data.data
+            self.characteristicToSend = (characteristicDic[characteristicuuidString]) as? CBMutableCharacteristic
+            self.centralToSend = centralDic[centraluuidString] as? CBCentral
+            self.NOTIFY_MTU = self.centralToSend?.maximumUpdateValueLength ?? 20
+            self.offset = 0
+            self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
+        }
+    }
+    
+    func sendData(data:NSData, characteristic:CBMutableCharacteristic, central:CBCentral){
+        while (self.offset < data.length) {
+            let thisChunkSize = ((data.length - self.offset) > NOTIFY_MTU) ? NOTIFY_MTU : (data.length - self.offset)
+            let chunk = data.subdata(with: NSMakeRange(self.offset, thisChunkSize))
+            let didSend = peripheralManager?.updateValue(chunk as Data, for: characteristic, onSubscribedCentrals: [central]) ?? false
+            if !didSend {
+                return
+            }
+            self.offset += thisChunkSize
+        }
+        let sendEOF = peripheralManager?.updateValue("EOF".data(using: String.Encoding.utf8) ?? Data(), for: characteristic, onSubscribedCentrals: [central]) ?? false
+        if sendEOF {
+            print("EOF")
         }
     }
     
@@ -107,6 +136,10 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
                 peripheral.respond(to: request, withResult: .success)
             }
         })
+    }
+    
+    public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        self.sendData(data: self.dataToSend! as NSData, characteristic: self.characteristicToSend!, central: self.centralToSend!)
     }
     
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
