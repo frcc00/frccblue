@@ -24,10 +24,8 @@ import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
 import android.widget.Toast
-import java.nio.charset.Charset
-import java.sql.Time
+import com.example.android.bluetoothgattperipheral.DeviceProfile
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 class FrccbluePlugin() : MethodCallHandler {
@@ -66,25 +64,8 @@ class FrccbluePlugin() : MethodCallHandler {
 
             val device = centralsDic.get(centraluuidString)
             val characteristic = characteristicsDic.get(characteristicuuidString)
+            characteristic?.setValue(data)
 
-            val chunksize = 20
-            var start = 0
-            var packetsToSend = Math.ceil( data.size / chunksize * 1.0).toInt()
-            val packetsToSendArr = ArrayList<ByteArray>()
-
-            for (i in 0..packetsToSend){
-                var chunkdata = Arrays.copyOfRange(data, start, if ((start+chunksize)>data.size) (data.size) else (start+chunksize))
-                packetsToSendArr.add(chunkdata)
-                start += chunksize
-            }
-
-            for (data in packetsToSendArr){
-                characteristic?.setValue(data)
-                mGattServer?.notifyCharacteristicChanged(device, characteristic, false)
-                Thread.sleep(200)
-            }
-
-            characteristic?.setValue("EOF".toByteArray(Charsets.UTF_8))
             mGattServer?.notifyCharacteristicChanged(device, characteristic, false)
         }
     }
@@ -254,13 +235,11 @@ class FrccbluePlugin() : MethodCallHandler {
 //
             if (UUID.fromString(Characteristic_UUID) == characteristic.uuid) {
                 channel?.invokeMethod("didReceiveWrite",hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString(), "data" to value))
-                if(responseNeeded) {
-                    mGattServer?.sendResponse(device,
-                            requestId,
-                            BluetoothGatt.GATT_SUCCESS,
-                            0,
-                            null)
-                }
+                mGattServer?.sendResponse(device,
+                        requestId,
+                        BluetoothGatt.GATT_SUCCESS,
+                        0,
+                        null)
             }
         }
 
@@ -282,13 +261,11 @@ class FrccbluePlugin() : MethodCallHandler {
             super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value)
             Log.i(TAG, "onDescriptorWriteRequest " + descriptor?.uuid.toString() + "preparedWrite:"+preparedWrite+"responseNeeded:"+responseNeeded+"value:"+value)
 
-            if(responseNeeded) {
-                mGattServer?.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        null)
-            }
+            mGattServer?.sendResponse(device,
+                    requestId,
+                    BluetoothGatt.GATT_SUCCESS,
+                    0,
+                    null)
 
             if (descriptorsDic.containsKey(descriptor?.uuid.toString())){
                 descriptorsDic.remove(descriptor?.uuid.toString())
