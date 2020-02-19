@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - frccblue (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - frccblue (from `.symlinks/plugins/frccblue/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  frccblue:
+    :path: ".symlinks/plugins/frccblue/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  frccblue: f37697fd2bcb0ce5f55077d0e69aa2b71b51ea7c
+
+PODFILE CHECKSUM: 1b66dae606f75376c5f2135a8290850eeb09ae83
+
+COCOAPODS: 1.8.4

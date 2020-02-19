@@ -24,7 +24,6 @@ import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
 import android.widget.Toast
-import com.example.android.bluetoothgattperipheral.DeviceProfile
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -49,8 +48,8 @@ class FrccbluePlugin() : MethodCallHandler {
         }
         if (call.method.equals("startPeripheral")) {
             print("startPeripheral")
-            Service_UUID = call.argument<String>("serviceUUID")
-            Characteristic_UUID = call.argument<String>("characteristicUUID")
+            Service_UUID = call.argument<String>("serviceUUID").toString()
+            Characteristic_UUID = call.argument<String>("characteristicUUID").toString()
             startPeripheral()
         }
         if (call.method.equals("stopPeripheral")) {
