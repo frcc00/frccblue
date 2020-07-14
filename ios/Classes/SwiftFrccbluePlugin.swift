@@ -69,7 +69,8 @@ public class SwiftFrccbluePlugin: NSObject, FlutterPlugin, CBPeripheralManagerDe
             state = "poweredOn"
             setupServiceAndCharacteristics()
             let deviceNmae = UIDevice.current.name;
-            self.peripheralManager?.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [CBUUID.init(string: Service_UUID)],CBAdvertisementDataLocalNameKey:deviceNmae])
+//            self.peripheralManager?.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [CBUUID.init(string: Service_UUID)],CBAdvertisementDataLocalNameKey:deviceNmae])
+                        self.peripheralManager?.startAdvertising([CBAdvertisementDataServiceUUIDsKey : [CBUUID.init(string: Service_UUID)]])
         }
         channel?.invokeMethod("peripheralManagerDidUpdateState", arguments: state)
     }
