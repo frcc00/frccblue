@@ -1,19 +1,10 @@
 package com.pauldemarco.frccblue
 
-import android.annotation.TargetApi
 import android.app.Activity
-import android.app.Notification
-import android.app.PendingIntent
-import android.app.Service
 import android.bluetooth.*
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.PluginRegistry.Registrar
+import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
-import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.BluetoothLeAdvertiser
 import android.content.BroadcastReceiver
 import android.content.ContentValues.TAG
@@ -21,9 +12,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.*
+import android.os.Handler
+import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import android.widget.Toast
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -33,6 +31,7 @@ class FrccbluePlugin() : MethodCallHandler {
         var activity: Activity? = null
         var channel:MethodChannel? = null
         var registerReceiver:Boolean = false
+        private val handler: Handler = Handler(Looper.getMainLooper())
         @JvmStatic
         fun registerWith(registrar: Registrar): Unit {
             var channel = MethodChannel(registrar.messenger(), "frccblue")
@@ -48,15 +47,20 @@ class FrccbluePlugin() : MethodCallHandler {
         }
         if (call.method.equals("startPeripheral")) {
             print("startPeripheral")
+//            handler.post(Runnable {
             Service_UUID = call.argument<String>("serviceUUID").toString()
             Characteristic_UUID = call.argument<String>("characteristicUUID").toString()
             startPeripheral()
+//            })
         }
         if (call.method.equals("stopPeripheral")) {
             print("stopPeripheral")
+//            handler.post(Runnable {
             stopAdvertising()
+//            })
         }
         if (call.method.equals("peripheralUpdateValue")) {
+//            handler.post(Runnable {
             var centraluuidString = call.argument<String>("centraluuidString")
             var characteristicuuidString = call.argument<String>("characteristicuuidString")
             var data = call.argument<ByteArray>("data")
@@ -65,7 +69,11 @@ class FrccbluePlugin() : MethodCallHandler {
             val characteristic = characteristicsDic.get(characteristicuuidString)
             characteristic?.setValue(data)
 
+//                mGattServer = mBluetoothManager!!.openGattServer(FrccbluePlugin.activity?.applicationContext, mGattServerCallback)
             mGattServer?.notifyCharacteristicChanged(device, characteristic, false)
+            Log.e("Frccblue", "mGattServer?.notifyCharacteristicChanged(device, characteristic, false)");
+
+//            })
         }
     }
 
@@ -95,7 +103,9 @@ class FrccbluePlugin() : MethodCallHandler {
                             BluetoothAdapter.STATE_OFF -> statestr = "poweredOff"
                             BluetoothAdapter.STATE_ON -> statestr = "poweredOn"
                         }
-                        channel?.invokeMethod("peripheralManagerDidUpdateState",statestr)
+                        handler.post(Runnable {
+                            channel?.invokeMethod("peripheralManagerDidUpdateState",statestr)
+                        })
                         if (statestr=="poweredOn"){
                             this@FrccbluePlugin.startPeripheral()
                         }
@@ -120,7 +130,9 @@ class FrccbluePlugin() : MethodCallHandler {
          */
         if (mBluetoothAdapter == null || !mBluetoothAdapter!!.isEnabled()) {
             //Bluetooth is disabled
-            channel?.invokeMethod("peripheralManagerDidUpdateState","poweredOff")
+            handler.post(Runnable {
+                channel?.invokeMethod("peripheralManagerDidUpdateState","poweredOff")
+            })
             return
         }
 
@@ -147,6 +159,10 @@ class FrccbluePlugin() : MethodCallHandler {
 
         mBluetoothLeAdvertiser = mBluetoothAdapter!!.getBluetoothLeAdvertiser()
         mGattServer = mBluetoothManager!!.openGattServer(FrccbluePlugin.activity?.applicationContext, mGattServerCallback)
+        if (mGattServer == null) {
+            Log.w(TAG, "Unable to create GATT server")
+            return
+        }
 
         initServer()
         startAdvertising()
@@ -189,7 +205,9 @@ class FrccbluePlugin() : MethodCallHandler {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 centralsDic.remove(device.address)
                 print("onConnectionStateChange STATE_DISCONNECTED "+device.address)
-                channel?.invokeMethod("didUnsubscribeFrom",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to ""))
+                handler.post(Runnable {
+                    channel?.invokeMethod("didUnsubscribeFrom",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to ""))
+                })
             }
         }
 
@@ -218,7 +236,10 @@ class FrccbluePlugin() : MethodCallHandler {
 
                     }
                 }
-                channel?.invokeMethod("didReceiveRead", hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString()), cb);
+
+                handler.post(Runnable {
+                    channel?.invokeMethod("didReceiveRead", hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString()), cb);
+                })
             }
         }
 
@@ -232,14 +253,19 @@ class FrccbluePlugin() : MethodCallHandler {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value)
             Log.i(TAG, "onCharacteristicWriteRequest " + characteristic.uuid.toString())
 //
-            if (UUID.fromString(Characteristic_UUID) == characteristic.uuid) {
-                channel?.invokeMethod("didReceiveWrite",hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString(), "data" to value))
-                mGattServer?.sendResponse(device,
-                        requestId,
-                        BluetoothGatt.GATT_SUCCESS,
-                        0,
-                        null)
-            }
+            handler.post(Runnable {
+                if (UUID.fromString(Characteristic_UUID) == characteristic.uuid) {
+                    handler.post(Runnable {
+                        channel?.invokeMethod("didReceiveWrite",hashMapOf("centraluuidString" to device?.address, "characteristicuuidString" to characteristic.uuid.toString(), "data" to value))
+                    })
+                    mGattServer?.sendResponse(device,
+                            requestId,
+                            BluetoothGatt.GATT_SUCCESS,
+                            0,
+                            null)
+                }
+            })
+
         }
 
         override fun onNotificationSent(device: BluetoothDevice?, status: Int) {
@@ -259,22 +285,22 @@ class FrccbluePlugin() : MethodCallHandler {
         override fun onDescriptorWriteRequest(device: BluetoothDevice?, requestId: Int, descriptor: BluetoothGattDescriptor?, preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray?) {
             super.onDescriptorWriteRequest(device, requestId, descriptor, preparedWrite, responseNeeded, offset, value)
             Log.i(TAG, "onDescriptorWriteRequest " + descriptor?.uuid.toString() + "preparedWrite:"+preparedWrite+"responseNeeded:"+responseNeeded+"value:"+value)
-
             mGattServer?.sendResponse(device,
                     requestId,
                     BluetoothGatt.GATT_SUCCESS,
                     0,
                     null)
-
-            if (descriptorsDic.containsKey(descriptor?.uuid.toString())){
-                descriptorsDic.remove(descriptor?.uuid.toString())
-                characteristicsDic.remove(descriptor?.characteristic?.uuid.toString())
-                channel?.invokeMethod("didUnsubscribeFrom",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to descriptor?.characteristic?.uuid.toString()))
-            }else{
-                descriptorsDic.put(descriptor?.uuid.toString(), descriptor!!)
-                characteristicsDic.put(descriptor?.characteristic?.uuid.toString(), descriptor?.characteristic!!)
-                channel?.invokeMethod("didSubscribeTo",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to descriptor?.characteristic?.uuid.toString()))
-            }
+            handler.post(Runnable {
+                if (descriptorsDic.containsKey(descriptor?.uuid.toString())){
+                    descriptorsDic.remove(descriptor?.uuid.toString())
+                    characteristicsDic.remove(descriptor?.characteristic?.uuid.toString())
+                    channel?.invokeMethod("didUnsubscribeFrom",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to descriptor?.characteristic?.uuid.toString(),"localName" to device?.name))
+                }else{
+                    descriptorsDic.put(descriptor?.uuid.toString(), descriptor!!)
+                    characteristicsDic.put(descriptor?.characteristic?.uuid.toString(), descriptor?.characteristic!!)
+                    channel?.invokeMethod("didSubscribeTo",hashMapOf("centraluuidString" to device?.address!!,"characteristicuuidString" to descriptor?.characteristic?.uuid.toString(),"localName" to device?.name))
+                }
+            })
         }
     }
 
@@ -304,8 +330,11 @@ class FrccbluePlugin() : MethodCallHandler {
      */
     private fun stopAdvertising() {
         if (mBluetoothLeAdvertiser == null) return
-
+        if (mGattServer != null) {
+            mGattServer!!.close()
+        }
         mBluetoothLeAdvertiser!!.stopAdvertising(mAdvertiseCallback)
+
     }
 
     /*
