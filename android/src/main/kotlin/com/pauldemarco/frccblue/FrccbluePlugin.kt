@@ -399,8 +399,7 @@ class FrccbluePlugin() : MethodCallHandler {
 
         // If stopAdvertising() gets called before close() a null
         // pointer exception is raised.
-        if(mAdvertiser!=null)
-            mAdvertiser!!.stopAdvertising(mAdvCallback)
+        mAdvertiser!!.stopAdvertising(mAdvCallback)
     }
 
     /*
@@ -417,3 +416,4 @@ class FrccbluePlugin() : MethodCallHandler {
         }
     }
 }
+
